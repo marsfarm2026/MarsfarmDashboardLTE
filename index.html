@@ -327,7 +327,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI
   const API_URL = "https://script.google.com/macros/s/AKfycbw52S2MIIHEpaPeG8CheQiuBM6bu91SSuqH6wOD3u2-qkaKVWain-O5PWlW4BEtB6Ch/exec";
 
   let rawSalesData = [];
@@ -351,6 +350,7 @@
 
     $("#tab-" + tabName + "-content").show();
 
+    // Render chart/tabel sesuai tab yang dibuka agar ukuran canvas pas
     if (tabName === 'produk') {
       filterProductTable();
     } else if (tabName === 'target') {
@@ -370,15 +370,26 @@
         rawSalesData = data.sales || [];
         rawTargetData = data.target || [];
 
-        renderSummaryTab();
-        renderProductTab();
-        renderTargetTab();
+        // Hanya panggil tab yang sedang aktif saat ini
+        const activeTab = $(".nav-sidebar .nav-link.active").attr("id")?.replace("nav-", "") || "summary";
+        
+        renderProductTabOptions(); // Isi dropdown filter produk
+        
+        if (activeTab === "summary") renderSummaryTab();
+        else if (activeTab === "produk") filterProductTable();
+        else if (activeTab === "target") renderTargetTab();
       })
       .catch(error => {
         document.getElementById("loadingScreen").style.display = "none";
         console.error("Error fetching data:", error);
         alert("Gagal mengambil data dari server. Silakan coba lagi.");
       });
+  }
+
+  // Helper untuk parse angka aman
+  function parseNum(val) {
+    const n = parseFloat(val);
+    return isNaN(n) ? 0 : n;
   }
 
   function renderSummaryTab() {
@@ -400,15 +411,20 @@
     let dayMap = {};
 
     rawSalesData.forEach(r => {
-      totalQty += r.qty;
-      totalDiskon += r.diskon;
-      totalRevenue += r.subtotal;
+      const qty = parseNum(r.qty);
+      const diskon = parseNum(r.diskon);
+      const subtotal = parseNum(r.subtotal);
+      const day = r.day_ || "Lainnya";
 
-      if (!dayMap[r.day_]) {
-        dayMap[r.day_] = { totalSubtotal: 0, items: [] };
+      totalQty += qty;
+      totalDiskon += diskon;
+      totalRevenue += subtotal;
+
+      if (!dayMap[day]) {
+        dayMap[day] = { totalSubtotal: 0, items: [] };
       }
-      dayMap[r.day_].totalSubtotal += r.subtotal;
-      dayMap[r.day_].items.push(r);
+      dayMap[day].totalSubtotal += subtotal;
+      dayMap[day].items.push(r);
     });
 
     $("#sumTotalQty").text(totalQty.toLocaleString("id-ID"));
@@ -461,26 +477,26 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td class="text-center">${no++}</td>
-          <td><span class="badge badge-warning">${r.day_}</span></td>
-          <td>${r.tanggal_}</td>
-          <td><strong>${r.produk_}</strong></td>
-          <td class="text-center">${r.qty.toLocaleString("id-ID")}</td>
-          <td class="text-right">Rp ${r.harga.toLocaleString("id-ID")}</td>
-          <td class="text-right font-weight-bold text-success">Rp ${r.subtotal.toLocaleString("id-ID")}</td>
-          <td class="text-right text-danger">Rp ${r.diskon.toLocaleString("id-ID")}</td>
+          <td><span class="badge badge-warning">${r.day_ || '-'}</span></td>
+          <td>${r.tanggal_ || '-'}</td>
+          <td><strong>${r.produk_ || '-'}</strong></td>
+          <td class="text-center">${parseNum(r.qty).toLocaleString("id-ID")}</td>
+          <td class="text-right">Rp ${parseNum(r.harga).toLocaleString("id-ID")}</td>
+          <td class="text-right font-weight-bold text-success">Rp ${parseNum(r.subtotal).toLocaleString("id-ID")}</td>
+          <td class="text-right text-danger">Rp ${parseNum(r.diskon).toLocaleString("id-ID")}</td>
         `;
         tbody.appendChild(tr);
       });
     });
   }
 
-  function renderProductTab() {
+  function renderProductTabOptions() {
     if (!rawSalesData || rawSalesData.length === 0) return;
 
     const selectDay = document.getElementById("filterProductDay");
     selectDay.innerHTML = '<option value="ALL">-- Semua Hari --</option>';
 
-    const uniqueDays = [...new Set(rawSalesData.map(r => r.day_))].sort((a, b) => {
+    const uniqueDays = [...new Set(rawSalesData.map(r => r.day_))].filter(Boolean).sort((a, b) => {
       const numA = parseInt(a.replace(/\D/g, "")) || 0;
       const numB = parseInt(b.replace(/\D/g, "")) || 0;
       return numA - numB;
@@ -492,8 +508,6 @@
       opt.innerText = day;
       selectDay.appendChild(opt);
     });
-
-    filterProductTable();
   }
 
   function filterProductTable() {
@@ -508,12 +522,16 @@
     let totalSubtotalAll = 0;
 
     filtered.forEach(r => {
-      totalSubtotalAll += r.subtotal;
-      if (!productMap[r.produk_]) {
-        productMap[r.produk_] = { nama: r.produk_, qty: 0, subtotal: 0 };
+      const subtotal = parseNum(r.subtotal);
+      const qty = parseNum(r.qty);
+      const nama = r.produk_ || "Tidak Diketahui";
+
+      totalSubtotalAll += subtotal;
+      if (!productMap[nama]) {
+        productMap[nama] = { nama: nama, qty: 0, subtotal: 0 };
       }
-      productMap[r.produk_].qty += r.qty;
-      productMap[r.produk_].subtotal += r.subtotal;
+      productMap[nama].qty += qty;
+      productMap[nama].subtotal += subtotal;
     });
 
     let productList = Object.values(productMap).sort((a, b) => b.qty - a.qty);
@@ -557,8 +575,8 @@
     }
 
     const labels = rawTargetData.map(r => r.day);
-    const targetValues = rawTargetData.map(r => r.target);
-    const revenueValues = rawTargetData.map(r => r.revenue);
+    const targetValues = rawTargetData.map(r => parseNum(r.target));
+    const revenueValues = rawTargetData.map(r => parseNum(r.revenue));
 
     const ctx = document.getElementById("chartTargetVsRevenue").getContext("2d");
     if (chartTargetInstance) chartTargetInstance.destroy();
@@ -592,19 +610,25 @@
     });
 
     rawTargetData.forEach((r, idx) => {
-      const isAchieved = r.revenue >= r.target;
+      const target = parseNum(r.target);
+      const revenue = parseNum(r.revenue);
+      const selisih = parseNum(r.selisih);
+
+      const isAchieved = revenue >= target;
       const badgeClass = isAchieved ? "badge-success" : "badge-danger";
-      const pctFormatted = typeof r.percent === 'number' && !isNaN(r.percent) 
-                           ? (r.percent * (r.percent <= 1 ? 100 : 1)).toFixed(2) + "%" 
-                           : String(r.percent);
+      
+      const pctVal = parseNum(r.percent);
+      const pctFormatted = pctVal > 0 
+                           ? (pctVal <= 1 ? (pctVal * 100).toFixed(2) : pctVal.toFixed(2)) + "%"
+                           : "0%";
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td class="text-center">${idx + 1}</td>
-        <td><strong>${r.day}</strong></td>
-        <td class="text-right">Rp ${r.target.toLocaleString("id-ID")}</td>
-        <td class="text-right font-weight-bold text-success">Rp ${r.revenue.toLocaleString("id-ID")}</td>
-        <td class="text-right ${r.selisih < 0 ? 'text-danger' : 'text-primary'}">Rp ${r.selisih.toLocaleString("id-ID")}</td>
+        <td><strong>${r.day || '-'}</strong></td>
+        <td class="text-right">Rp ${target.toLocaleString("id-ID")}</td>
+        <td class="text-right font-weight-bold text-success">Rp ${revenue.toLocaleString("id-ID")}</td>
+        <td class="text-right ${selisih < 0 ? 'text-danger' : 'text-primary'}">Rp ${selisih.toLocaleString("id-ID")}</td>
         <td class="text-center"><span class="badge ${badgeClass} p-2">${pctFormatted}</span></td>
       `;
       tbody.appendChild(tr);
