@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Management Dashboard - Mars Farm</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- AdminLTE CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+
+  <style>
+    body {
+      background-color: #f4f6f9 !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .main-sidebar {
+      background-color: #212529 !important;
+      position: fixed !important;
+      top: 0; bottom: 0; left: 0;
+      z-index: 1038;
+    }
+    .brand-link { 
+      background-color: #8D5524 !important; 
+      color: #ffffff !important;
+    }
+    .nav-sidebar .nav-link.active {
+      background-color: #C68642 !important;
+      color: #ffffff !important;
+    }
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.9); z-index: 99999;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+    }
+    .group-header-row td {
+      background-color: #e9ecef !important;
+      font-weight: bold;
+      color: #8D5524;
+      border-bottom: 2px solid #C68642 !important;
+    }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+
+<!-- Screen Loading -->
+<div id="loadingScreen" class="loading-overlay">
+  <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;"></div>
+  <h5 class="mt-3 text-dark font-weight-bold">Memuat Dashboard...</h5>
+</div>
+
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <span class="nav-link font-weight-bold text-dark">MARS FARM - MANAGEMENT DASHBOARD</span>
+      </li>
+    </ul>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <button class="btn btn-outline-secondary btn-sm" onclick="refreshAllData()">
+          <i class="fas fa-sync-alt mr-1"></i> Refresh Data
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Sidebar Navigasi Statis -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="javascript:void(0)" onclick="switchTab(event, 'summary')" class="brand-link text-center" style="cursor: pointer;">
+      <span class="brand-text font-weight-bold text-white">MARS MEDIA</span>
+    </a>
+
+    <div class="sidebar">
+      <nav class="mt-3">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+          <li class="nav-item">
+            <a href="#" class="nav-link active" id="nav-summary" onclick="switchTab(event, 'summary')">
+              <i class="nav-icon fas fa-chart-line"></i>
+              <p>Summary</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" id="nav-produk" onclick="switchTab(event, 'produk')">
+              <i class="nav-icon fas fa-box-open"></i>
+              <p>Produk</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" id="nav-target" onclick="switchTab(event, 'target')">
+              <i class="nav-icon fas fa-bullseye"></i>
+              <p>Target</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper p-2 p-md-3">
+    
+    <!-- TAB 1: SUMMARY VIEW -->
+    <div id="tab-summary-content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0 font-weight-bold text-dark">Sales Overview</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-12 col-sm-6 col-md-4">
+              <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-boxes"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Total Qty Terjual</span>
+                  <span class="info-box-number text-lg" id="sumTotalQty">0</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4">
+              <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-tags"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Total Diskon</span>
+                  <span class="info-box-number text-lg" id="sumTotalDiskon">Rp 0</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4">
+              <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-success elevation-1"><i class="fas fa-wallet"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Total Revenue</span>
+                  <span class="info-box-number text-lg" id="sumTotalRevenue">Rp 0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card card-outline card-warning shadow-sm">
+                <div class="card-header">
+                  <h3 class="card-title font-weight-bold"><i class="fas fa-chart-bar mr-1"></i> Perbandingan Penjualan</h3>
+                </div>
+                <div class="card-body">
+                  <canvas id="chartPenjualan" style="min-height: 250px; height: 280px; max-height: 300px; max-width: 100%;"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-header bg-dark">
+                  <h3 class="card-title font-weight-bold"><i class="fas fa-list mr-1"></i> Detail Laporan Transaksi</h3>
+                </div>
+                <div class="card-body table-responsive p-0" style="height: 420px;">
+                  <table class="table table-head-fixed table-hover text-nowrap">
+                    <thead>
+                      <tr>
+                        <th width="50" class="text-center">No</th>
+                        <th>Hari</th>
+                        <th>Tanggal</th>
+                        <th>Produk</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-right">Harga</th>
+                        <th class="text-right">Subtotal</th>
+                        <th class="text-right">Diskon</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tableSummaryBody">
+                      <tr><td colspan="8" class="text-center py-4">Memuat data...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 2: PRODUK VIEW -->
+    <div id="tab-produk-content" style="display: none;">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0 font-weight-bold text-dark">Performa Produk Terjual</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <div class="card shadow-sm mb-3">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-md-4">
+                  <label class="font-weight-bold">Filter Hari:</label>
+                  <select id="filterProductDay" class="form-control" onchange="filterProductTable()">
+                    <option value="ALL">-- Semua Hari --</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-header bg-dark">
+                  <h3 class="card-title font-weight-bold"><i class="fas fa-sort-amount-down mr-1"></i> Ranking Terjual (Terbanyak - Terendah)</h3>
+                </div>
+                <div class="card-body table-responsive p-0" style="height: 450px;">
+                  <table class="table table-head-fixed table-hover text-nowrap">
+                    <thead>
+                      <tr>
+                        <th width="50" class="text-center">No</th>
+                        <th>Nama Produk</th>
+                        <th class="text-center">Qty Terjual</th>
+                        <th class="text-right">Subtotal</th>
+                        <th class="text-center" width="200">Kontribusi (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tableProductBody">
+                      <tr><td colspan="5" class="text-center py-4">Memuat data...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 3: TARGET VIEW -->
+    <div id="tab-target-content" style="display: none;">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0 font-weight-bold text-dark">Target vs Revenue Performance</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card card-outline card-success shadow-sm">
+                <div class="card-header">
+                  <h3 class="card-title font-weight-bold"><i class="fas fa-chart-line mr-1"></i> Grafik Pencapaian Target vs Revenue</h3>
+                </div>
+                <div class="card-body">
+                  <canvas id="chartTargetVsRevenue" style="min-height: 250px; height: 280px; max-height: 300px; max-width: 100%;"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-header bg-dark">
+                  <h3 class="card-title font-weight-bold"><i class="fas fa-bullseye mr-1"></i> Data Realisasi Target</h3>
+                </div>
+                <div class="card-body table-responsive p-0">
+                  <table class="table table-head-fixed table-hover text-nowrap">
+                    <thead>
+                      <tr>
+                        <th width="50" class="text-center">No</th>
+                        <th>Hari</th>
+                        <th class="text-right">Target</th>
+                        <th class="text-right">Revenue</th>
+                        <th class="text-right">Selisih</th>
+                        <th class="text-center">Percent (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tableTargetBody">
+                      <tr><td colspan="6" class="text-center py-4">Memuat data...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <footer class="main-footer text-sm">
+    <div class="float-right d-none d-sm-inline">
+      <b>Version</b> 2.0.1
+    </div>
+    <strong>Event Report Made By Tiar - Mars Media</strong>
+  </footer>
+</div>
+
+<!-- Scripts Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI
+  const API_URL = "PASTE_URL_WEB_APP_GOOGLE_DI_SINI";
+
+  let rawSalesData = [];
+  let rawTargetData = [];
+  let chartPenjualanInstance = null;
+  let chartTargetInstance = null;
+
+  window.onload = function() {
+    refreshAllData();
+  };
+
+  function switchTab(event, tabName) {
+    if (event) event.preventDefault();
+
+    $(".nav-sidebar .nav-link").removeClass("active");
+    $("#nav-" + tabName).addClass("active");
+
+    $("#tab-summary-content").hide();
+    $("#tab-produk-content").hide();
+    $("#tab-target-content").hide();
+
+    $("#tab-" + tabName + "-content").show();
+
+    if (tabName === 'produk') {
+      filterProductTable();
+    } else if (tabName === 'target') {
+      renderTargetTab();
+    } else if (tabName === 'summary') {
+      renderSummaryTab();
+    }
+  }
+
+  function refreshAllData() {
+    document.getElementById("loadingScreen").style.display = "flex";
+
+    fetch(API_URL)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("loadingScreen").style.display = "none";
+        rawSalesData = data.sales || [];
+        rawTargetData = data.target || [];
+
+        renderSummaryTab();
+        renderProductTab();
+        renderTargetTab();
+      })
+      .catch(error => {
+        document.getElementById("loadingScreen").style.display = "none";
+        console.error("Error fetching data:", error);
+        alert("Gagal mengambil data dari server. Silakan coba lagi.");
+      });
+  }
+
+  function renderSummaryTab() {
+    const tbody = document.getElementById("tableSummaryBody");
+    tbody.innerHTML = "";
+
+    if (!rawSalesData || rawSalesData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Data kosong.</td></tr>';
+      $("#sumTotalQty").text("0");
+      $("#sumTotalDiskon").text("Rp 0");
+      $("#sumTotalRevenue").text("Rp 0");
+      if (chartPenjualanInstance) chartPenjualanInstance.destroy();
+      return;
+    }
+
+    let totalQty = 0;
+    let totalDiskon = 0;
+    let totalRevenue = 0;
+    let dayMap = {};
+
+    rawSalesData.forEach(r => {
+      totalQty += r.qty;
+      totalDiskon += r.diskon;
+      totalRevenue += r.subtotal;
+
+      if (!dayMap[r.day_]) {
+        dayMap[r.day_] = { totalSubtotal: 0, items: [] };
+      }
+      dayMap[r.day_].totalSubtotal += r.subtotal;
+      dayMap[r.day_].items.push(r);
+    });
+
+    $("#sumTotalQty").text(totalQty.toLocaleString("id-ID"));
+    $("#sumTotalDiskon").text("Rp " + totalDiskon.toLocaleString("id-ID"));
+    $("#sumTotalRevenue").text("Rp " + totalRevenue.toLocaleString("id-ID"));
+
+    const sortedDays = Object.keys(dayMap).sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, "")) || 0;
+      const numB = parseInt(b.replace(/\D/g, "")) || 0;
+      return numA - numB;
+    });
+
+    const chartLabels = sortedDays;
+    const chartValues = sortedDays.map(day => dayMap[day].totalSubtotal);
+
+    const ctx = document.getElementById("chartPenjualan").getContext("2d");
+    if (chartPenjualanInstance) chartPenjualanInstance.destroy();
+
+    chartPenjualanInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: chartLabels,
+        datasets: [{
+          label: 'Total Penjualan (Rp)',
+          data: chartValues,
+          backgroundColor: '#C68642',
+          borderColor: '#8D5524',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    let no = 1;
+    sortedDays.forEach(day => {
+      const trGroup = document.createElement("tr");
+      trGroup.className = "group-header-row";
+      trGroup.innerHTML = `
+        <td colspan="6"><i class="fas fa-calendar-day mr-2"></i><strong>${day}</strong></td>
+        <td class="text-right font-weight-bold">Total: Rp ${dayMap[day].totalSubtotal.toLocaleString("id-ID")}</td>
+        <td></td>
+      `;
+      tbody.appendChild(trGroup);
+
+      dayMap[day].items.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="text-center">${no++}</td>
+          <td><span class="badge badge-warning">${r.day_}</span></td>
+          <td>${r.tanggal_}</td>
+          <td><strong>${r.produk_}</strong></td>
+          <td class="text-center">${r.qty.toLocaleString("id-ID")}</td>
+          <td class="text-right">Rp ${r.harga.toLocaleString("id-ID")}</td>
+          <td class="text-right font-weight-bold text-success">Rp ${r.subtotal.toLocaleString("id-ID")}</td>
+          <td class="text-right text-danger">Rp ${r.diskon.toLocaleString("id-ID")}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+  }
+
+  function renderProductTab() {
+    if (!rawSalesData || rawSalesData.length === 0) return;
+
+    const selectDay = document.getElementById("filterProductDay");
+    selectDay.innerHTML = '<option value="ALL">-- Semua Hari --</option>';
+
+    const uniqueDays = [...new Set(rawSalesData.map(r => r.day_))].sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, "")) || 0;
+      const numB = parseInt(b.replace(/\D/g, "")) || 0;
+      return numA - numB;
+    });
+
+    uniqueDays.forEach(day => {
+      const opt = document.createElement("option");
+      opt.value = day;
+      opt.innerText = day;
+      selectDay.appendChild(opt);
+    });
+
+    filterProductTable();
+  }
+
+  function filterProductTable() {
+    const selectedDay = document.getElementById("filterProductDay").value;
+    
+    let filtered = rawSalesData;
+    if (selectedDay !== "ALL") {
+      filtered = rawSalesData.filter(r => r.day_ === selectedDay);
+    }
+
+    let productMap = {};
+    let totalSubtotalAll = 0;
+
+    filtered.forEach(r => {
+      totalSubtotalAll += r.subtotal;
+      if (!productMap[r.produk_]) {
+        productMap[r.produk_] = { nama: r.produk_, qty: 0, subtotal: 0 };
+      }
+      productMap[r.produk_].qty += r.qty;
+      productMap[r.produk_].subtotal += r.subtotal;
+    });
+
+    let productList = Object.values(productMap).sort((a, b) => b.qty - a.qty);
+
+    const tbody = document.getElementById("tableProductBody");
+    tbody.innerHTML = "";
+
+    if (productList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Tidak ada data produk.</td></tr>';
+      return;
+    }
+
+    productList.forEach((p, idx) => {
+      const percent = totalSubtotalAll > 0 ? ((p.subtotal / totalSubtotalAll) * 100).toFixed(2) : 0;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="text-center">${idx + 1}</td>
+        <td><strong>${p.nama}</strong></td>
+        <td class="text-center font-weight-bold text-primary">${p.qty.toLocaleString("id-ID")}</td>
+        <td class="text-right font-weight-bold text-success">Rp ${p.subtotal.toLocaleString("id-ID")}</td>
+        <td class="text-center">
+          <div class="progress progress-sm mb-1" style="height: 6px;">
+            <div class="progress-bar bg-warning" style="width: ${percent}%"></div>
+          </div>
+          <small class="font-weight-bold">${percent}%</small>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderTargetTab() {
+    const tbody = document.getElementById("tableTargetBody");
+    tbody.innerHTML = "";
+
+    if (!rawTargetData || rawTargetData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Data Target kosong.</td></tr>';
+      if (chartTargetInstance) chartTargetInstance.destroy();
+      return;
+    }
+
+    const labels = rawTargetData.map(r => r.day);
+    const targetValues = rawTargetData.map(r => r.target);
+    const revenueValues = rawTargetData.map(r => r.revenue);
+
+    const ctx = document.getElementById("chartTargetVsRevenue").getContext("2d");
+    if (chartTargetInstance) chartTargetInstance.destroy();
+
+    chartTargetInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Target (Rp)',
+            data: targetValues,
+            backgroundColor: '#adb5bd',
+            borderColor: '#6c757d',
+            borderWidth: 1
+          },
+          {
+            label: 'Revenue (Rp)',
+            data: revenueValues,
+            backgroundColor: '#28a745',
+            borderColor: '#1e7e34',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    rawTargetData.forEach((r, idx) => {
+      const isAchieved = r.revenue >= r.target;
+      const badgeClass = isAchieved ? "badge-success" : "badge-danger";
+      const pctFormatted = typeof r.percent === 'number' && !isNaN(r.percent) 
+                           ? (r.percent * (r.percent <= 1 ? 100 : 1)).toFixed(2) + "%" 
+                           : String(r.percent);
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="text-center">${idx + 1}</td>
+        <td><strong>${r.day}</strong></td>
+        <td class="text-right">Rp ${r.target.toLocaleString("id-ID")}</td>
+        <td class="text-right font-weight-bold text-success">Rp ${r.revenue.toLocaleString("id-ID")}</td>
+        <td class="text-right ${r.selisih < 0 ? 'text-danger' : 'text-primary'}">Rp ${r.selisih.toLocaleString("id-ID")}</td>
+        <td class="text-center"><span class="badge ${badgeClass} p-2">${pctFormatted}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+</script>
+</body>
+</html>
