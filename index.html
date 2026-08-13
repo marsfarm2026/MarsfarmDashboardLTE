@@ -727,52 +727,58 @@
   }
 
   // --- TAB 4: STOCK VIEW (UPDATED) ---
-  function renderStockTab() {
-    const tbody = document.getElementById("tableStockBody");
-    tbody.innerHTML = "";
+ // --- TAB: STOCK VIEW ---
+function renderStockTab() {
+  const tbody = document.getElementById("tableStockBody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
 
-    if (!rawStockData || rawStockData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Data Stok kosong.</td></tr>';
-      return;
-    }
+  if (!rawStockData || rawStockData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Data Stok kosong.</td></tr>';
+    return;
+  }
 
-    // Hitung total penjualan per produk dari sheet sales
-    let salesByProduct = {};
+  // 1. Hitung total qty penjualan per produk dari sheet Sales/Detail
+  let salesByProduct = {};
+  if (Array.isArray(rawSalesData)) {
     rawSalesData.forEach(r => {
-      const pName = r.produk_ || r.produk || r.nama_produk || "";
+      const pName = r.produk_ || r.nama_produk || r.produk || "";
       if (pName) {
-        salesByProduct[pName] = (salesByProduct[pName] || 0) + parseNum(r.qty);
+        // Asumsi fungsi parseNum() sudah ada di skrip Anda, jika belum ada bisa gunakan (Number(x) || 0)
+        const qtyVal = typeof parseNum === "function" ? parseNum(r.qty) : (Number(r.qty) || 0);
+        salesByProduct[pName] = (salesByProduct[pName] || 0) + qtyVal;
       }
     });
-
-    rawStockData.forEach((r, idx) => {
-      const namaProduk = r.produk_ || r.produk || r.nama_produk || r.namaProduk || "Tidak Diketahui";
-      
-      // Mengambil Nilai Kolom G (stok_masuk/stok) + Kolom H (stok_tambahan/stok_in)
-      const colG = parseNum(r.stok_masuk || r.stok || r.masuk);
-      const colH = parseNum(r.stok_tambahan || r.stok_in || r.tambahan || r.in);
-      
-      // Total Stok = Kolom G + Kolom H
-      const totalStok = colG + colH;
-
-      // Terjual dari sales
-      const terjual = salesByProduct[namaProduk] !== undefined 
-                      ? salesByProduct[namaProduk] 
-                      : parseNum(r.terjual || r.qty_terjual);
-                      
-      const sisaStok = totalStok - terjual;
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="text-center">${idx + 1}</td>
-        <td><strong>${namaProduk}</strong></td>
-        <td class="text-center font-weight-bold text-info">${totalStok.toLocaleString("id-ID")}</td>
-        <td class="text-center font-weight-bold text-danger">${terjual.toLocaleString("id-ID")}</td>
-        <td class="text-center font-weight-bold text-success" style="font-size: 1.05rem;">${sisaStok.toLocaleString("id-ID")}</td>
-      `;
-      tbody.appendChild(tr);
-    });
   }
+
+  // 2. Loop data stok hasil penjumlahan Kolom G + H dari Apps Script
+  rawStockData.forEach((r, idx) => {
+    const namaProduk = r.nama_produk || r.produk_ || r.namaProduk || "Tidak Diketahui";
+    
+    // Ambil stok total (Kolom G + Kolom H dari Google Script)
+    const totalStok = typeof parseNum === "function" 
+      ? parseNum(r.stok_total || r.stok) 
+      : (Number(r.stok_total || r.stok) || 0);
+
+    // Ambil total produk terjual
+    const terjual = salesByProduct[namaProduk] !== undefined 
+                    ? salesByProduct[namaProduk] 
+                    : 0;
+                    
+    // Hitung sisa stok
+    const sisaStok = totalStok - terjual;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="text-center">${idx + 1}</td>
+      <td><strong>${namaProduk}</strong></td>
+      <td class="text-center font-weight-bold text-info">${totalStok.toLocaleString("id-ID")}</td>
+      <td class="text-center font-weight-bold text-danger">${terjual.toLocaleString("id-ID")}</td>
+      <td class="text-center font-weight-bold text-success" style="font-size: 1.05rem;">${sisaStok.toLocaleString("id-ID")}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
 
 </script>
 </body>
