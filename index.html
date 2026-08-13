@@ -105,7 +105,7 @@
               <p>Target</p>
             </a>
           </li>
-          <!-- Penambahan Menu Stock -->
+          <!-- Menu Stock -->
           <li class="nav-item">
             <a href="#" class="nav-link" id="nav-stock" onclick="switchTab(event, 'stock')">
               <i class="nav-icon fas fa-cubes"></i>
@@ -342,58 +342,26 @@
 
       <section class="content">
         <div class="container-fluid">
-          <!-- Summary Cards Stock -->
-          <div class="row">
-            <div class="col-12 col-sm-6 col-md-4">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-secondary elevation-1"><i class="fas fa-boxes"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Total Jenis Produk</span>
-                  <span class="info-box-number text-lg" id="stockTotalItem">0</span>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-4">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-truck-loading"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Total Item Masuk</span>
-                  <span class="info-box-number text-lg" id="stockTotalMasuk">0</span>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-4">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-success elevation-1"><i class="fas fa-warehouse"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Total Sisa Stok</span>
-                  <span class="info-box-number text-lg" id="stockTotalSisa">0</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Table Stock -->
+          <!-- Table Stock (Card View Atas Hapus) -->
           <div class="row">
             <div class="col-12">
               <div class="card shadow-sm">
                 <div class="card-header bg-dark">
                   <h3 class="card-title font-weight-bold"><i class="fas fa-cubes mr-1"></i> Rincian Persediaan Stok</h3>
                 </div>
-                <div class="card-body table-responsive p-0" style="height: 450px;">
+                <div class="card-body table-responsive p-0" style="height: 480px;">
                   <table class="table table-head-fixed table-hover text-nowrap">
                     <thead>
                       <tr>
                         <th width="50" class="text-center">No</th>
                         <th>Nama Produk</th>
-                        <th class="text-center">Stok Masuk</th>
+                        <th class="text-center">Stok</th>
                         <th class="text-center">Terjual</th>
                         <th class="text-center">Sisa Stok</th>
-                        <th class="text-center">Status</th>
                       </tr>
                     </thead>
                     <tbody id="tableStockBody">
-                      <tr><td colspan="6" class="text-center py-4">Memuat data...</td></tr>
+                      <tr><td colspan="5" class="text-center py-4">Memuat data...</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -408,7 +376,7 @@
 
   <footer class="main-footer text-sm">
     <div class="float-right d-none d-sm-inline">
-      <b>Version</b> 2.0.1
+      <b>Version</b> 2.0.2
     </div>
     <strong>Event Report Made By Tiar - Mars Media</strong>
   </footer>
@@ -421,7 +389,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  // Link deploy Apps Script terbaru
+  // Link deploy Apps Script
   const API_URL = "https://script.google.com/macros/s/AKfycbxNelE2uFo70blNgJeinFBg5JmGTsNfSwfdoi8kLgaNmgXUiyZ6Pl1yDvzE7ctYruS2/exec";
 
   let rawSalesData = [];
@@ -758,20 +726,17 @@
     });
   }
 
-  // --- TAB 4: STOCK VIEW (PERBAIKAN DILAKUKAN DI SINI) ---
+  // --- TAB 4: STOCK VIEW (UPDATED) ---
   function renderStockTab() {
     const tbody = document.getElementById("tableStockBody");
     tbody.innerHTML = "";
 
     if (!rawStockData || rawStockData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Data Stok kosong.</td></tr>';
-      $("#stockTotalItem").text("0 Produk");
-      $("#stockTotalMasuk").text("0 Pcs");
-      $("#stockTotalSisa").text("0 Pcs");
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Data Stok kosong.</td></tr>';
       return;
     }
 
-    // Hitung total penjualan berdasarkan nama produk dari transaksi sales
+    // Hitung total penjualan per produk dari sheet sales
     let salesByProduct = {};
     rawSalesData.forEach(r => {
       const pName = r.produk_ || r.produk || r.nama_produk || "";
@@ -780,49 +745,33 @@
       }
     });
 
-    let totalItemCount = rawStockData.length;
-    let totalMasukSum = 0;
-    let totalSisaSum = 0;
-
     rawStockData.forEach((r, idx) => {
-      // Menangani berbagai variasi key dari Google Sheets
       const namaProduk = r.produk_ || r.produk || r.nama_produk || r.namaProduk || "Tidak Diketahui";
-      const stokMasuk = parseNum(r.stok_masuk || r.stokMasuk || r.stok || r.masuk);
       
-      // Mengutamakan hitungan otomatis dari transaksi sales, jika tidak ada baru ambil dari sheet stock
+      // Mengambil Nilai Kolom G (stok_masuk/stok) + Kolom H (stok_tambahan/stok_in)
+      const colG = parseNum(r.stok_masuk || r.stok || r.masuk);
+      const colH = parseNum(r.stok_tambahan || r.stok_in || r.tambahan || r.in);
+      
+      // Total Stok = Kolom G + Kolom H
+      const totalStok = colG + colH;
+
+      // Terjual dari sales
       const terjual = salesByProduct[namaProduk] !== undefined 
                       ? salesByProduct[namaProduk] 
                       : parseNum(r.terjual || r.qty_terjual);
                       
-      const sisaStok = stokMasuk - terjual;
-
-      totalMasukSum += stokMasuk;
-      totalSisaSum += sisaStok;
-
-      // Status Badge
-      let badgeStatus = '<span class="badge badge-success">Aman</span>';
-      if (sisaStok <= 0) {
-        badgeStatus = '<span class="badge badge-danger">Habis</span>';
-      } else if (sisaStok <= 5) {
-        badgeStatus = '<span class="badge badge-warning">Menipis</span>';
-      }
+      const sisaStok = totalStok - terjual;
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td class="text-center">${idx + 1}</td>
         <td><strong>${namaProduk}</strong></td>
-        <td class="text-center font-weight-bold text-info">${stokMasuk.toLocaleString("id-ID")}</td>
+        <td class="text-center font-weight-bold text-info">${totalStok.toLocaleString("id-ID")}</td>
         <td class="text-center font-weight-bold text-danger">${terjual.toLocaleString("id-ID")}</td>
-        <td class="text-center font-weight-bold text-success" style="font-size: 1.1rem;">${sisaStok.toLocaleString("id-ID")}</td>
-        <td class="text-center">${badgeStatus}</td>
+        <td class="text-center font-weight-bold text-success" style="font-size: 1.05rem;">${sisaStok.toLocaleString("id-ID")}</td>
       `;
       tbody.appendChild(tr);
     });
-
-    // Update Summary Cards Stock
-    $("#stockTotalItem").text(totalItemCount.toLocaleString("id-ID") + " Produk");
-    $("#stockTotalMasuk").text(totalMasukSum.toLocaleString("id-ID") + " Pcs");
-    $("#stockTotalSisa").text(totalSisaSum.toLocaleString("id-ID") + " Pcs");
   }
 
 </script>
