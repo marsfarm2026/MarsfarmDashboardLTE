@@ -42,6 +42,11 @@
       color: #8D5524;
       border-bottom: 2px solid #C68642 !important;
     }
+    .table-footer-total td {
+      background-color: #343a40 !important;
+      color: #ffffff !important;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -134,10 +139,10 @@
             </div>
             <div class="col-12 col-sm-6 col-md-4">
               <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-tags"></i></span>
+                <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-receipt"></i></span>
                 <div class="info-box-content">
-                  <span class="info-box-text">Total Diskon</span>
-                  <span class="info-box-number text-lg" id="sumTotalDiskon">Rp 0</span>
+                  <span class="info-box-text">Total Transaksi</span>
+                  <span class="info-box-number text-lg" id="sumTotalTransaksi">0</span>
                 </div>
               </div>
             </div>
@@ -156,7 +161,7 @@
             <div class="col-md-12">
               <div class="card card-outline card-warning shadow-sm">
                 <div class="card-header">
-                  <h3 class="card-title font-weight-bold"><i class="fas fa-chart-bar mr-1"></i> Perbandingan Penjualan</h3>
+                  <h3 class="card-title font-weight-bold"><i class="fas fa-chart-bar mr-1"></i> Perbandingan Penjualan per Hari</h3>
                 </div>
                 <div class="card-body">
                   <canvas id="chartPenjualan" style="min-height: 250px; height: 280px; max-height: 300px; max-width: 100%;"></canvas>
@@ -214,10 +219,16 @@
           <div class="card shadow-sm mb-3">
             <div class="card-body">
               <div class="row align-items-center">
-                <div class="col-md-4">
+                <div class="col-md-4 mb-2 mb-md-0">
                   <label class="font-weight-bold">Filter Hari:</label>
                   <select id="filterProductDay" class="form-control" onchange="filterProductTable()">
                     <option value="ALL">-- Semua Hari --</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="font-weight-bold">Filter Produk:</label>
+                  <select id="filterProductName" class="form-control" onchange="filterProductTable()">
+                    <option value="ALL">-- Semua Produk --</option>
                   </select>
                 </div>
               </div>
@@ -338,6 +349,16 @@
     refreshAllData();
   };
 
+  // Utility Helpers
+  function parseNum(val) {
+    const n = parseFloat(val);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function formatRupiah(val) {
+    return "Rp " + parseNum(val).toLocaleString("id-ID");
+  }
+
   function switchTab(event, tabName) {
     if (event) event.preventDefault();
 
@@ -350,7 +371,6 @@
 
     $("#tab-" + tabName + "-content").show();
 
-    // Render chart/tabel sesuai tab yang dibuka agar ukuran canvas pas
     if (tabName === 'produk') {
       filterProductTable();
     } else if (tabName === 'target') {
@@ -370,11 +390,9 @@
         rawSalesData = data.sales || [];
         rawTargetData = data.target || [];
 
-        // Hanya panggil tab yang sedang aktif saat ini
+        renderProductTabOptions();
+        
         const activeTab = $(".nav-sidebar .nav-link.active").attr("id")?.replace("nav-", "") || "summary";
-        
-        renderProductTabOptions(); // Isi dropdown filter produk
-        
         if (activeTab === "summary") renderSummaryTab();
         else if (activeTab === "produk") filterProductTable();
         else if (activeTab === "target") renderTargetTab();
@@ -386,12 +404,7 @@
       });
   }
 
-  // Helper untuk parse angka aman
-  function parseNum(val) {
-    const n = parseFloat(val);
-    return isNaN(n) ? 0 : n;
-  }
-
+  // --- TAB 1: SUMMARY ---
   function renderSummaryTab() {
     const tbody = document.getElementById("tableSummaryBody");
     tbody.innerHTML = "";
@@ -399,25 +412,23 @@
     if (!rawSalesData || rawSalesData.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Data kosong.</td></tr>';
       $("#sumTotalQty").text("0");
-      $("#sumTotalDiskon").text("Rp 0");
+      $("#sumTotalTransaksi").text("0");
       $("#sumTotalRevenue").text("Rp 0");
       if (chartPenjualanInstance) chartPenjualanInstance.destroy();
       return;
     }
 
     let totalQty = 0;
-    let totalDiskon = 0;
+    let totalTransaksi = rawSalesData.length;
     let totalRevenue = 0;
     let dayMap = {};
 
     rawSalesData.forEach(r => {
       const qty = parseNum(r.qty);
-      const diskon = parseNum(r.diskon);
       const subtotal = parseNum(r.subtotal);
       const day = r.day_ || "Lainnya";
 
       totalQty += qty;
-      totalDiskon += diskon;
       totalRevenue += subtotal;
 
       if (!dayMap[day]) {
@@ -428,8 +439,8 @@
     });
 
     $("#sumTotalQty").text(totalQty.toLocaleString("id-ID"));
-    $("#sumTotalDiskon").text("Rp " + totalDiskon.toLocaleString("id-ID"));
-    $("#sumTotalRevenue").text("Rp " + totalRevenue.toLocaleString("id-ID"));
+    $("#sumTotalTransaksi").text(totalTransaksi.toLocaleString("id-ID") + " Transaksi");
+    $("#sumTotalRevenue").text(formatRupiah(totalRevenue));
 
     const sortedDays = Object.keys(dayMap).sort((a, b) => {
       const numA = parseInt(a.replace(/\D/g, "")) || 0;
@@ -437,19 +448,17 @@
       return numA - numB;
     });
 
-    const chartLabels = sortedDays;
-    const chartValues = sortedDays.map(day => dayMap[day].totalSubtotal);
-
+    // Chart Render
     const ctx = document.getElementById("chartPenjualan").getContext("2d");
     if (chartPenjualanInstance) chartPenjualanInstance.destroy();
 
     chartPenjualanInstance = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: chartLabels,
+        labels: sortedDays,
         datasets: [{
           label: 'Total Penjualan (Rp)',
-          data: chartValues,
+          data: sortedDays.map(day => dayMap[day].totalSubtotal),
           backgroundColor: '#C68642',
           borderColor: '#8D5524',
           borderWidth: 1
@@ -462,13 +471,14 @@
       }
     });
 
+    // Table Render
     let no = 1;
     sortedDays.forEach(day => {
       const trGroup = document.createElement("tr");
       trGroup.className = "group-header-row";
       trGroup.innerHTML = `
         <td colspan="6"><i class="fas fa-calendar-day mr-2"></i><strong>${day}</strong></td>
-        <td class="text-right font-weight-bold">Total: Rp ${dayMap[day].totalSubtotal.toLocaleString("id-ID")}</td>
+        <td class="text-right font-weight-bold">${formatRupiah(dayMap[day].totalSubtotal)}</td>
         <td></td>
       `;
       tbody.appendChild(trGroup);
@@ -481,15 +491,16 @@
           <td>${r.tanggal_ || '-'}</td>
           <td><strong>${r.produk_ || '-'}</strong></td>
           <td class="text-center">${parseNum(r.qty).toLocaleString("id-ID")}</td>
-          <td class="text-right">Rp ${parseNum(r.harga).toLocaleString("id-ID")}</td>
-          <td class="text-right font-weight-bold text-success">Rp ${parseNum(r.subtotal).toLocaleString("id-ID")}</td>
-          <td class="text-right text-danger">Rp ${parseNum(r.diskon).toLocaleString("id-ID")}</td>
+          <td class="text-right">${formatRupiah(r.harga)}</td>
+          <td class="text-right font-weight-bold text-success">${formatRupiah(r.subtotal)}</td>
+          <td class="text-right text-danger">${formatRupiah(r.diskon)}</td>
         `;
         tbody.appendChild(tr);
       });
     });
   }
 
+  // --- TAB 2: PRODUK ---
   function renderProductTabOptions() {
     if (!rawSalesData || rawSalesData.length === 0) return;
 
@@ -508,15 +519,26 @@
       opt.innerText = day;
       selectDay.appendChild(opt);
     });
+
+    const selectProduct = document.getElementById("filterProductName");
+    selectProduct.innerHTML = '<option value="ALL">-- Semua Produk --</option>';
+
+    const uniqueProducts = [...new Set(rawSalesData.map(r => r.produk_))].filter(Boolean).sort();
+    uniqueProducts.forEach(prod => {
+      const opt = document.createElement("option");
+      opt.value = prod;
+      opt.innerText = prod;
+      selectProduct.appendChild(opt);
+    });
   }
 
   function filterProductTable() {
     const selectedDay = document.getElementById("filterProductDay").value;
+    const selectedProduct = document.getElementById("filterProductName").value;
     
     let filtered = rawSalesData;
-    if (selectedDay !== "ALL") {
-      filtered = rawSalesData.filter(r => r.day_ === selectedDay);
-    }
+    if (selectedDay !== "ALL") filtered = filtered.filter(r => r.day_ === selectedDay);
+    if (selectedProduct !== "ALL") filtered = filtered.filter(r => r.produk_ === selectedProduct);
 
     let productMap = {};
     let totalSubtotalAll = 0;
@@ -535,7 +557,6 @@
     });
 
     let productList = Object.values(productMap).sort((a, b) => b.qty - a.qty);
-
     const tbody = document.getElementById("tableProductBody");
     tbody.innerHTML = "";
 
@@ -552,7 +573,7 @@
         <td class="text-center">${idx + 1}</td>
         <td><strong>${p.nama}</strong></td>
         <td class="text-center font-weight-bold text-primary">${p.qty.toLocaleString("id-ID")}</td>
-        <td class="text-right font-weight-bold text-success">Rp ${p.subtotal.toLocaleString("id-ID")}</td>
+        <td class="text-right font-weight-bold text-success">${formatRupiah(p.subtotal)}</td>
         <td class="text-center">
           <div class="progress progress-sm mb-1" style="height: 6px;">
             <div class="progress-bar bg-warning" style="width: ${percent}%"></div>
@@ -564,6 +585,7 @@
     });
   }
 
+  // --- TAB 3: TARGET ---
   function renderTargetTab() {
     const tbody = document.getElementById("tableTargetBody");
     tbody.innerHTML = "";
@@ -574,10 +596,47 @@
       return;
     }
 
-    const labels = rawTargetData.map(r => r.day);
-    const targetValues = rawTargetData.map(r => parseNum(r.target));
-    const revenueValues = rawTargetData.map(r => parseNum(r.revenue));
+    // Kalkulasi revenue otomatis per hari dari Sales Data
+    let salesByDay = {};
+    rawSalesData.forEach(r => {
+      const day = r.day_ || "";
+      salesByDay[day] = (salesByDay[day] || 0) + parseNum(r.subtotal);
+    });
 
+    const labels = [];
+    const targetValues = [];
+    const revenueValues = [];
+
+    rawTargetData.forEach((r, idx) => {
+      const dayName = r.day || r.day_ || `Hari ${idx + 1}`;
+      const target = parseNum(r.target);
+      // Mengutamakan revenue kalkulasi otomatis, fallback ke r.revenue dari backend
+      const revenue = salesByDay[dayName] !== undefined ? salesByDay[dayName] : parseNum(r.revenue);
+      const selisih = revenue - target;
+      
+      let pctVal = target > 0 ? (revenue / target) * 100 : 0;
+      const pctFormatted = pctVal.toFixed(2) + "%";
+
+      labels.push(dayName);
+      targetValues.push(target);
+      revenueValues.push(revenue);
+
+      const isAchieved = revenue >= target;
+      const badgeClass = isAchieved ? "badge-success" : "badge-danger";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="text-center">${idx + 1}</td>
+        <td><strong>${dayName}</strong></td>
+        <td class="text-right">${formatRupiah(target)}</td>
+        <td class="text-right font-weight-bold text-success">${formatRupiah(revenue)}</td>
+        <td class="text-right ${selisih < 0 ? 'text-danger' : 'text-primary'}">${formatRupiah(selisih)}</td>
+        <td class="text-center"><span class="badge ${badgeClass} p-2">${pctFormatted}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Chart Render
     const ctx = document.getElementById("chartTargetVsRevenue").getContext("2d");
     if (chartTargetInstance) chartTargetInstance.destroy();
 
@@ -607,31 +666,6 @@
         maintainAspectRatio: false,
         scales: { y: { beginAtZero: true } }
       }
-    });
-
-    rawTargetData.forEach((r, idx) => {
-      const target = parseNum(r.target);
-      const revenue = parseNum(r.revenue);
-      const selisih = parseNum(r.selisih);
-
-      const isAchieved = revenue >= target;
-      const badgeClass = isAchieved ? "badge-success" : "badge-danger";
-      
-      const pctVal = parseNum(r.percent);
-      const pctFormatted = pctVal > 0 
-                           ? (pctVal <= 1 ? (pctVal * 100).toFixed(2) : pctVal.toFixed(2)) + "%"
-                           : "0%";
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="text-center">${idx + 1}</td>
-        <td><strong>${r.day || '-'}</strong></td>
-        <td class="text-right">Rp ${target.toLocaleString("id-ID")}</td>
-        <td class="text-right font-weight-bold text-success">Rp ${revenue.toLocaleString("id-ID")}</td>
-        <td class="text-right ${selisih < 0 ? 'text-danger' : 'text-primary'}">Rp ${selisih.toLocaleString("id-ID")}</td>
-        <td class="text-center"><span class="badge ${badgeClass} p-2">${pctFormatted}</span></td>
-      `;
-      tbody.appendChild(tr);
     });
   }
 </script>
