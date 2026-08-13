@@ -285,6 +285,47 @@
 
       <section class="content">
         <div class="container-fluid">
+          
+          <!-- Card Info Tambahan Tab Target -->
+          <div class="row">
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-secondary elevation-1"><i class="fas fa-bullseye"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Total Target</span>
+                  <span class="info-box-number text-lg" id="targetTotalTarget">Rp 0</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-success elevation-1"><i class="fas fa-chart-line"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Total Revenue</span>
+                  <span class="info-box-number text-lg" id="targetTotalRevenue">Rp 0</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-balance-scale"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Selisih</span>
+                  <span class="info-box-number text-lg" id="targetTotalSelisih">Rp 0</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-percentage"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Pencapaian</span>
+                  <span class="info-box-number text-lg" id="targetTotalPercent">0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="row">
             <div class="col-md-12">
               <div class="card card-outline card-success shadow-sm">
@@ -652,6 +693,10 @@
     if (!rawTargetData || rawTargetData.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Data Target kosong.</td></tr>';
       if (chartTargetInstance) chartTargetInstance.destroy();
+      $("#targetTotalTarget").text("Rp 0");
+      $("#targetTotalRevenue").text("Rp 0");
+      $("#targetTotalSelisih").text("Rp 0");
+      $("#targetTotalPercent").text("0%");
       return;
     }
 
@@ -665,12 +710,18 @@
     const targetValues = [];
     const revenueValues = [];
 
+    let sumTarget = 0;
+    let sumRevenue = 0;
+
     rawTargetData.forEach((r, idx) => {
       const dayName = r.day || r.day_ || `Hari ${idx + 1}`;
       const target = parseNum(r.target);
       const revenue = salesByDay[dayName] !== undefined ? salesByDay[dayName] : parseNum(r.revenue);
       const selisih = revenue - target;
       
+      sumTarget += target;
+      sumRevenue += revenue;
+
       let pctVal = target > 0 ? (revenue / target) * 100 : 0;
       const pctFormatted = pctVal.toFixed(2) + "%";
 
@@ -692,6 +743,15 @@
       `;
       tbody.appendChild(tr);
     });
+
+    // Update Nilai Card Info Tab Target
+    const sumSelisih = sumRevenue - sumTarget;
+    const totalPct = sumTarget > 0 ? ((sumRevenue / sumTarget) * 100).toFixed(2) : 0;
+
+    $("#targetTotalTarget").text(formatRupiah(sumTarget));
+    $("#targetTotalRevenue").text(formatRupiah(sumRevenue));
+    $("#targetTotalSelisih").text(formatRupiah(sumSelisih));
+    $("#targetTotalPercent").text(totalPct + "%");
 
     // Chart Render
     const ctx = document.getElementById("chartTargetVsRevenue").getContext("2d");
@@ -726,59 +786,52 @@
     });
   }
 
-  // --- TAB 4: STOCK VIEW (UPDATED) ---
- // --- TAB: STOCK VIEW ---
-function renderStockTab() {
-  const tbody = document.getElementById("tableStockBody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
+  // --- TAB 4: STOCK VIEW ---
+  function renderStockTab() {
+    const tbody = document.getElementById("tableStockBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
 
-  if (!rawStockData || rawStockData.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Data Stok kosong.</td></tr>';
-    return;
-  }
+    if (!rawStockData || rawStockData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Data Stok kosong.</td></tr>';
+      return;
+    }
 
-  // 1. Hitung total qty penjualan per produk dari sheet Sales/Detail
-  let salesByProduct = {};
-  if (Array.isArray(rawSalesData)) {
-    rawSalesData.forEach(r => {
-      const pName = r.produk_ || r.nama_produk || r.produk || "";
-      if (pName) {
-        // Asumsi fungsi parseNum() sudah ada di skrip Anda, jika belum ada bisa gunakan (Number(x) || 0)
-        const qtyVal = typeof parseNum === "function" ? parseNum(r.qty) : (Number(r.qty) || 0);
-        salesByProduct[pName] = (salesByProduct[pName] || 0) + qtyVal;
-      }
+    let salesByProduct = {};
+    if (Array.isArray(rawSalesData)) {
+      rawSalesData.forEach(r => {
+        const pName = r.produk_ || r.nama_produk || r.produk || "";
+        if (pName) {
+          const qtyVal = typeof parseNum === "function" ? parseNum(r.qty) : (Number(r.qty) || 0);
+          salesByProduct[pName] = (salesByProduct[pName] || 0) + qtyVal;
+        }
+      });
+    }
+
+    rawStockData.forEach((r, idx) => {
+      const namaProduk = r.nama_produk || r.produk_ || r.namaProduk || "Tidak Diketahui";
+      
+      const totalStok = typeof parseNum === "function" 
+        ? parseNum(r.stok_total || r.stok) 
+        : (Number(r.stok_total || r.stok) || 0);
+
+      const terjual = salesByProduct[namaProduk] !== undefined 
+                      ? salesByProduct[namaProduk] 
+                      : 0;
+                      
+      const sisaStok = totalStok - terjual;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="text-center">${idx + 1}</td>
+        <td><strong>${namaProduk}</strong></td>
+        <td class="text-center font-weight-bold text-info">${totalStok.toLocaleString("id-ID")}</td>
+        <td class="text-center font-weight-bold text-danger">${terjual.toLocaleString("id-ID")}</td>
+        <td class="text-center font-weight-bold text-success" style="font-size: 1.05rem;">${sisaStok.toLocaleString("id-ID")}</td>
+      `;
+      tbody.appendChild(tr);
     });
   }
-
-  // 2. Loop data stok hasil penjumlahan Kolom G + H dari Apps Script
-  rawStockData.forEach((r, idx) => {
-    const namaProduk = r.nama_produk || r.produk_ || r.namaProduk || "Tidak Diketahui";
-    
-    // Ambil stok total (Kolom G + Kolom H dari Google Script)
-    const totalStok = typeof parseNum === "function" 
-      ? parseNum(r.stok_total || r.stok) 
-      : (Number(r.stok_total || r.stok) || 0);
-
-    // Ambil total produk terjual
-    const terjual = salesByProduct[namaProduk] !== undefined 
-                    ? salesByProduct[namaProduk] 
-                    : 0;
-                    
-    // Hitung sisa stok
-    const sisaStok = totalStok - terjual;
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="text-center">${idx + 1}</td>
-      <td><strong>${namaProduk}</strong></td>
-      <td class="text-center font-weight-bold text-info">${totalStok.toLocaleString("id-ID")}</td>
-      <td class="text-center font-weight-bold text-danger">${terjual.toLocaleString("id-ID")}</td>
-      <td class="text-center font-weight-bold text-success" style="font-size: 1.05rem;">${sisaStok.toLocaleString("id-ID")}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
 
 </script>
 </body>
