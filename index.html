@@ -2,114 +2,157 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Management Dashboard - Mars Farm</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mars Farm Event 2026 Dashboard</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome Icons -->
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- AdminLTE CSS -->
+  <!-- Theme style AdminLTE -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
+    :root {
+      --palette-primary: #995F2F;
+      --palette-secondary: #978F66;
+      --palette-accent: #995F2F;
+      --palette-dark: #622B14;
+      --palette-dark-hover: #4a200f;
+    }
+
     body {
-      background-color: #f4f6f9 !important;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f4f6f9;
     }
-    .main-sidebar {
-      background-color: #212529 !important;
-      position: fixed !important;
-      top: 0; bottom: 0; left: 0;
-      z-index: 1038;
-    }
-    .brand-link { 
-      background-color: #8D5524 !important; 
+
+    .bg-mars {
+      background-color: var(--palette-primary) !important;
       color: #ffffff !important;
     }
-    .nav-sidebar .nav-link.active {
-      background-color: #C68642 !important;
+
+    .btn-mars {
+      background-color: var(--palette-primary);
+      color: #fff;
+      border-color: var(--palette-dark);
+    }
+    .btn-mars:hover {
+      background-color: var(--palette-dark);
+      color: #fff;
+    }
+
+    .sidebar-dark-mars {
+      background-color: var(--palette-dark) !important;
+    }
+    .sidebar-dark-mars .nav-sidebar>.nav-item>.nav-link.active {
+      background-color: var(--palette-primary) !important;
       color: #ffffff !important;
     }
+
+    .navbar-mars {
+      background-color: var(--palette-primary);
+    }
+
+    .card-mars-header {
+      background-color: var(--palette-primary) !important;
+      color: #ffffff !important;
+    }
+
+    .table-subtotal {
+      background-color: #f3ede7;
+      font-weight: bold;
+      border-top: 2px solid var(--palette-primary);
+      border-bottom: 2px solid var(--palette-primary);
+    }
+
     .loading-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255,255,255,0.9); z-index: 99999;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
     }
-    .group-header-row td {
-      background-color: #e9ecef !important;
-      font-weight: bold;
-      color: #8D5524;
-      border-bottom: 2px solid #C68642 !important;
-    }
-    .table-footer-total td {
-      background-color: #343a40 !important;
-      color: #ffffff !important;
-      font-weight: bold;
+
+    /* Penyesuaian Tampilan Mobile Responsif */
+    @media (max-width: 575.98px) {
+      .small-box h3 {
+        font-size: 1.5rem;
+      }
+      .content-header h1 {
+        font-size: 1.3rem;
+      }
+      .card-title {
+        font-size: 1rem;
+      }
+      .table-responsive {
+        font-size: 13px;
+      }
     }
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
-
-<!-- Screen Loading -->
-<div id="loadingScreen" class="loading-overlay">
-  <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;"></div>
-  <h5 class="mt-3 text-dark font-weight-bold">Memuat Dashboard...</h5>
+<div id="loading" class="loading-overlay">
+  <div class="spinner-border" style="width: 3rem; height: 3rem; color: var(--palette-primary);" role="status"></div>
+  <h5 class="mt-3 font-weight-bold" style="color: var(--palette-dark);">Memuat Data Mars Media...</h5>
 </div>
 
 <div class="wrapper">
 
   <!-- Navbar -->
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+  <nav class="main-header navbar navbar-expand navbar-dark navbar-mars">
     <ul class="navbar-nav">
       <li class="nav-item">
         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
       </li>
       <li class="nav-item d-none d-sm-inline-block">
-        <span class="nav-link font-weight-bold text-dark">MARS FARM EVENT-KOPI FEST 2026 DASHBOARD</span>
+        <span class="nav-link font-weight-bold text-white">Mars Farm Event 2026 Dashboard</span>
       </li>
     </ul>
+
     <ul class="navbar-nav ml-auto">
       <li class="nav-item">
-        <button class="btn btn-outline-secondary btn-sm" onclick="refreshAllData()">
+        <button class="btn btn-sm btn-outline-light mt-1" onclick="loadData()">
           <i class="fas fa-sync-alt mr-1"></i> Refresh Data
         </button>
       </li>
     </ul>
   </nav>
 
-  <!-- Sidebar Navigasi Statis -->
-  <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="javascript:void(0)" onclick="switchTab(event, 'summary')" class="brand-link text-center" style="cursor: pointer;">
-      <span class="brand-text font-weight-bold text-white">MARS MEDIA</span>
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-mars elevation-4">
+    <a href="#" class="brand-link text-center border-bottom border-secondary">
+      <span class="brand-text font-weight-bold text-uppercase" style="letter-spacing: 1px; color: #e1d3c1;">Mars Media</span>
     </a>
 
     <div class="sidebar">
       <nav class="mt-3">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
           <li class="nav-item">
-            <a href="#" class="nav-link active" id="nav-summary" onclick="switchTab(event, 'summary')">
+            <a href="#" class="nav-link active" id="menu-summary" onclick="switchTab('summary')">
               <i class="nav-icon fas fa-chart-line"></i>
               <p>Summary</p>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link" id="nav-produk" onclick="switchTab(event, 'produk')">
+            <a href="#" class="nav-link" id="menu-produk" onclick="switchTab('produk')">
               <i class="nav-icon fas fa-box-open"></i>
-              <p>Produk</p>
+              <p>Performa Produk</p>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link" id="nav-target" onclick="switchTab(event, 'target')">
+            <a href="#" class="nav-link" id="menu-target" onclick="switchTab('target')">
               <i class="nav-icon fas fa-bullseye"></i>
-              <p>Target</p>
+              <p>Target vs Revenue</p>
             </a>
           </li>
-          <!-- Menu Stock -->
           <li class="nav-item">
-            <a href="#" class="nav-link" id="nav-stock" onclick="switchTab(event, 'stock')">
-              <i class="nav-icon fas fa-cubes"></i>
-              <p>Stock</p>
+            <a href="#" class="nav-link" id="menu-stok" onclick="switchTab('stok')">
+              <i class="nav-icon fas fa-warehouse"></i>
+              <p>Monitoring Stok</p>
             </a>
           </li>
         </ul>
@@ -118,721 +161,559 @@
   </aside>
 
   <!-- Content Wrapper -->
-  <div class="content-wrapper p-2 p-md-3">
-    
-    <!-- TAB 1: SUMMARY VIEW -->
-    <div id="tab-summary-content">
-      <div class="content-header">
-        <div class="container-fluid">
-          <div class="row mb-2">
-            <div class="col-sm-6">
-              <h1 class="m-0 font-weight-bold text-dark">Sales Overview</h1>
-            </div>
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 font-weight-bold" id="page-title" style="color: var(--palette-dark);">Sales Overview</h1>
           </div>
         </div>
       </div>
+    </div>
 
-      <section class="content">
-        <div class="container-fluid">
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+
+        <!-- SECTION SUMMARY -->
+        <div id="section-summary" class="tab-section">
           <div class="row">
-            <div class="col-12 col-sm-6 col-md-4">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-boxes"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Total Qty Terjual</span>
-                  <span class="info-box-number text-lg" id="sumTotalQty">0</span>
-                </div>
+            <div class="col-lg-4 col-6">
+              <div class="small-box bg-mars">
+                <div class="inner"><h3 id="card-qty">0</h3><p>Total Pesanan</p></div>
+                <div class="icon"><i class="fas fa-shopping-cart"></i></div>
               </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-4">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-receipt"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Total Transaksi</span>
-                  <span class="info-box-number text-lg" id="sumTotalTransaksi">0</span>
-                </div>
+            <div class="col-lg-4 col-6">
+              <div class="small-box bg-mars">
+                <div class="inner"><h3 id="card-transaksi">0</h3><p>Total Transaksi</p></div>
+                <div class="icon"><i class="fas fa-receipt"></i></div>
               </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-4">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-success elevation-1"><i class="fas fa-wallet"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Total Revenue</span>
-                  <span class="info-box-number text-lg" id="sumTotalRevenue">Rp 0</span>
-                </div>
+            <div class="col-lg-4 col-12">
+              <div class="small-box bg-mars">
+                <div class="inner"><h3 id="card-revenue">Rp 0</h3><p>Total Revenue</p></div>
+                <div class="icon"><i class="fas fa-wallet"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-12">
+              <div class="form-group mb-0">
+                <label for="filter-event"><i class="fas fa-filter mr-1"></i> Teks Filter Event</label>
+                <select class="form-control" id="filter-event" onchange="renderSummary()">
+                  <option value="Semua">-- Semua Event --</option>
+                </select>
               </div>
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-12">
-              <div class="card card-outline card-warning shadow-sm">
+              <div class="card card-outline" style="border-top: 3px solid var(--palette-primary);">
                 <div class="card-header">
-                  <h3 class="card-title font-weight-bold"><i class="fas fa-chart-bar mr-1"></i> Perbandingan Penjualan per Hari</h3>
+                  <h3 class="card-title font-weight-bold" style="color: var(--palette-dark);">Perbandingan Penjualan per Hari</h3>
                 </div>
                 <div class="card-body">
-                  <canvas id="chartPenjualan" style="min-height: 250px; height: 280px; max-height: 300px; max-width: 100%;"></canvas>
+                  <canvas id="barDayChart" style="min-height: 250px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <div class="card card-outline" style="border-top: 3px solid var(--palette-primary);">
+                <div class="card-header">
+                  <h3 class="card-title font-weight-bold" style="color: var(--palette-dark);">10 Produk Teratas Terjual (QTY)</h3>
+                </div>
+                <div class="card-body">
+                  <canvas id="donutTopProductChart" style="min-height: 250px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="row">
-            <div class="col-12">
-              <div class="card shadow-sm">
-                <div class="card-header bg-dark">
-                  <h3 class="card-title font-weight-bold"><i class="fas fa-list mr-1"></i> Detail Laporan Transaksi</h3>
-                </div>
-                <div class="card-body table-responsive p-0" style="height: 420px;">
-                  <table class="table table-head-fixed table-hover text-nowrap">
-                    <thead>
-                      <tr>
-                        <th width="50" class="text-center">No</th>
-                        <th>Hari</th>
-                        <th>Tanggal</th>
-                        <th>Produk</th>
-                        <th class="text-center">Qty</th>
-                        <th class="text-right">Harga</th>
-                        <th class="text-right">Subtotal</th>
-                        <th class="text-right">Diskon</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tableSummaryBody">
-                      <tr><td colspan="8" class="text-center py-4">Memuat data...</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+          <div class="card">
+            <div class="card-header card-mars-header d-flex align-items-center flex-wrap">
+              <h3 class="card-title font-weight-bold my-1">Detail Laporan Transaksi</h3>
             </div>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- TAB 2: PRODUK VIEW -->
-    <div id="tab-produk-content" style="display: none;">
-      <div class="content-header">
-        <div class="container-fluid">
-          <div class="row mb-2">
-            <div class="col-sm-6">
-              <h1 class="m-0 font-weight-bold text-dark">Performa Produk Terjual</h1>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <section class="content">
-        <div class="container-fluid">
-          <div class="card shadow-sm mb-3">
             <div class="card-body">
-              <div class="row align-items-center">
-                <div class="col-md-4 mb-2 mb-md-0">
-                  <label class="font-weight-bold">Filter Hari:</label>
-                  <select id="filterProductDay" class="form-control" onchange="filterProductTable()">
-                    <option value="ALL">-- Semua Hari --</option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="font-weight-bold">Filter Produk:</label>
-                  <select id="filterProductName" class="form-control" onchange="filterProductTable()">
-                    <option value="ALL">-- Semua Produk --</option>
+              <div class="row mb-3">
+                <div class="col-md-4 col-12">
+                  <label for="filter-detail-hari" class="text-sm"><i class="fas fa-calendar-day mr-1"></i> Filter Hari</label>
+                  <select class="form-control form-control-sm" id="filter-detail-hari" onchange="renderSummaryDetailTable()">
+                    <option value="Semua">-- Semua Hari --</option>
                   </select>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-12">
-              <div class="card shadow-sm">
-                <div class="card-header bg-dark">
-                  <h3 class="card-title font-weight-bold"><i class="fas fa-sort-amount-down mr-1"></i> Ranking Terjual (Terbanyak - Terendah)</h3>
-                </div>
-                <div class="card-body table-responsive p-0" style="height: 450px;">
-                  <table class="table table-head-fixed table-hover text-nowrap">
-                    <thead>
-                      <tr>
-                        <th width="50" class="text-center">No</th>
-                        <th>Nama Produk</th>
-                        <th class="text-center">Qty Terjual</th>
-                        <th class="text-right">Subtotal</th>
-                        <th class="text-center" width="200">Kontribusi (%)</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tableProductBody">
-                      <tr><td colspan="5" class="text-center py-4">Memuat data...</td></tr>
-                    </tbody>
-                  </table>
-                </div>
+              <div class="table-responsive p-0">
+                <table class="table table-hover text-nowrap">
+                  <thead>
+                    <tr>
+                      <th>No.</th>
+                      <th>Hari</th>
+                      <th>Produk</th>
+                      <th>QTY</th>
+                      <th>Harga</th>
+                      <th>Total</th>
+                      <th>Diskon</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody-detail"></tbody>
+                </table>
               </div>
             </div>
           </div>
         </div>
-      </section>
-    </div>
 
-    <!-- TAB 3: TARGET VIEW -->
-    <div id="tab-target-content" style="display: none;">
-      <div class="content-header">
-        <div class="container-fluid">
-          <div class="row mb-2">
-            <div class="col-sm-6">
-              <h1 class="m-0 font-weight-bold text-dark">Target vs Revenue Performance</h1>
+        <!-- SECTION PRODUK -->
+        <div id="section-produk" class="tab-section d-none">
+          <div class="row mb-3">
+            <div class="col-md-6 col-12 mb-2 mb-md-0">
+              <label><i class="fas fa-calendar-day mr-1"></i> Filter Hari</label>
+              <select class="form-control" id="filter-produk-hari" onchange="renderProdukSection()">
+                <option value="Semua">-- Semua Hari --</option>
+              </select>
+            </div>
+            <div class="col-md-6 col-12">
+              <label><i class="fas fa-box mr-1"></i> Filter Produk</label>
+              <select class="form-control" id="filter-produk-nama" onchange="renderProdukSection()">
+                <option value="Semua">-- Semua Produk --</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header card-mars-header">
+              <h3 class="card-title font-weight-bold">Ranking Terjual (Terbanyak - Terendah)</h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Nama Produk</th>
+                    <th>Qty Terjual</th>
+                    <th>Total Revenue</th>
+                    <th style="width: 30%;">Kontribusi (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-produk-rank"></tbody>
+              </table>
             </div>
           </div>
         </div>
+
+        <!-- SECTION TARGET -->
+        <div id="section-target" class="tab-section d-none">
+          <div class="row">
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-mars">
+                <div class="inner"><h3 id="target-total">Rp 0</h3><p>Total Target</p></div>
+                <div class="icon"><i class="fas fa-crosshairs"></i></div>
+              </div>
+            </div>
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-mars">
+                <div class="inner"><h3 id="target-revenue">Rp 0</h3><p>Total Revenue</p></div>
+                <div class="icon"><i class="fas fa-chart-line"></i></div>
+              </div>
+            </div>
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-mars">
+                <div class="inner"><h3 id="target-selisih">Rp 0</h3><p>Total Selisih</p></div>
+                <div class="icon"><i class="fas fa-balance-scale"></i></div>
+              </div>
+            </div>
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-mars">
+                <div class="inner"><h3 id="target-percent">0%</h3><p>Pencapaian</p></div>
+                <div class="icon"><i class="fas fa-percentage"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card card-outline" style="border-top: 3px solid var(--palette-primary);">
+            <div class="card-header">
+              <h3 class="card-title font-weight-bold" style="color: var(--palette-dark);">Grafik Pencapaian Target vs Revenue</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="barTargetChart" style="min-height: 250px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header card-mars-header">
+              <h3 class="card-title font-weight-bold">Data Realisasi Target</h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Hari</th>
+                    <th>Target</th>
+                    <th>Revenue</th>
+                    <th>Selisih</th>
+                    <th>Percent (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-target"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION STOK -->
+        <div id="section-stok" class="tab-section d-none">
+          <div class="row mb-3">
+            <div class="col-12">
+              <div class="input-group">
+                <input type="text" id="search-stok" class="form-control" placeholder="Cari Nama Produk..." onkeyup="renderStokSection()">
+                <div class="input-group-append">
+                  <span class="input-group-text bg-mars"><i class="fas fa-search"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header card-mars-header">
+              <h3 class="card-title font-weight-bold">Rincian Persediaan Stok</h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Nama Produk</th>
+                    <th>Stok (Awal+In)</th>
+                    <th>Terjual</th>
+                    <th>Sisa Stok</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-stok"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
-
-      <section class="content">
-        <div class="container-fluid">
-          
-          <!-- Card Info Tambahan Tab Target -->
-          <div class="row">
-            <div class="col-12 col-sm-6 col-md-3">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-secondary elevation-1"><i class="fas fa-bullseye"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Total Target</span>
-                  <span class="info-box-number text-lg" id="targetTotalTarget">Rp 0</span>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-success elevation-1"><i class="fas fa-chart-line"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Total Revenue</span>
-                  <span class="info-box-number text-lg" id="targetTotalRevenue">Rp 0</span>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-balance-scale"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Selisih</span>
-                  <span class="info-box-number text-lg" id="targetTotalSelisih">Rp 0</span>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-              <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-percentage"></i></span>
-                <div class="info-box-content">
-                  <span class="info-box-text">Pencapaian</span>
-                  <span class="info-box-number text-lg" id="targetTotalPercent">0%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-12">
-              <div class="card card-outline card-success shadow-sm">
-                <div class="card-header">
-                  <h3 class="card-title font-weight-bold"><i class="fas fa-chart-line mr-1"></i> Grafik Pencapaian Target vs Revenue</h3>
-                </div>
-                <div class="card-body">
-                  <canvas id="chartTargetVsRevenue" style="min-height: 250px; height: 280px; max-height: 300px; max-width: 100%;"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-12">
-              <div class="card shadow-sm">
-                <div class="card-header bg-dark">
-                  <h3 class="card-title font-weight-bold"><i class="fas fa-bullseye mr-1"></i> Data Realisasi Target</h3>
-                </div>
-                <div class="card-body table-responsive p-0">
-                  <table class="table table-head-fixed table-hover text-nowrap">
-                    <thead>
-                      <tr>
-                        <th width="50" class="text-center">No</th>
-                        <th>Hari</th>
-                        <th class="text-right">Target</th>
-                        <th class="text-right">Revenue</th>
-                        <th class="text-right">Selisih</th>
-                        <th class="text-center">Percent (%)</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tableTargetBody">
-                      <tr><td colspan="6" class="text-center py-4">Memuat data...</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- TAB 4: STOCK VIEW -->
-    <div id="tab-stock-content" style="display: none;">
-      <div class="content-header">
-        <div class="container-fluid">
-          <div class="row mb-2">
-            <div class="col-sm-6">
-              <h1 class="m-0 font-weight-bold text-dark">Monitoring Stok Produk</h1>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <section class="content">
-        <div class="container-fluid">
-          <!-- Table Stock (Card View Atas Hapus) -->
-          <div class="row">
-            <div class="col-12">
-              <div class="card shadow-sm">
-                <div class="card-header bg-dark">
-                  <h3 class="card-title font-weight-bold"><i class="fas fa-cubes mr-1"></i> Rincian Persediaan Stok</h3>
-                </div>
-                <div class="card-body table-responsive p-0" style="height: 480px;">
-                  <table class="table table-head-fixed table-hover text-nowrap">
-                    <thead>
-                      <tr>
-                        <th width="50" class="text-center">No</th>
-                        <th>Nama Produk</th>
-                        <th class="text-center">Stok</th>
-                        <th class="text-center">Terjual</th>
-                        <th class="text-center">Sisa Stok</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tableStockBody">
-                      <tr><td colspan="5" class="text-center py-4">Memuat data...</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-
+    </section>
   </div>
 
-  <footer class="main-footer text-sm">
-    <div class="float-right d-none d-sm-inline">
-      <b>Version</b> 2.0.2
-    </div>
-    <strong>Event Report Made By Tiar - Mars Media</strong>
+  <footer class="main-header footer text-sm text-center py-2" style="margin-left:0; background: #fff; border-top:1px solid #dee2e6;">
+    <strong>Mars Media &copy; 2026.</strong> Mars Farm Event Admin LTE.
   </footer>
 </div>
 
-<!-- Scripts Library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<!-- jQuery & Bootstrap -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  // Link deploy Apps Script
-  const API_URL = "https://script.google.com/macros/s/AKfycbxmBMzIeLSRg-Fx0EnZu9Uy9VGCPHvtvivd8AcYkoRb7-3DtqPWH1aF_e8maS57igqr/exec";
+  // Tautan URL Endpoint Apps Script (Deploy Web App "Anyone")
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiC2qyzG6uwkssc6pa31y3m6VWHs7PSz8tEZ5pvDIun4FDXLSFmSdjjVwzuP6PK16b/exec"; // Sesuaikan URL Apps Script Exec Anda jika berbeda
 
-  let rawSalesData = [];
-  let rawTargetData = [];
-  let rawStockData = []; 
-  let chartPenjualanInstance = null;
-  let chartTargetInstance = null;
+  let rawData = { detail: [], target: [], produk: [] };
+  let filteredSummaryDetail = [];
+  let barDayChartInstance = null;
+  let donutTopChartInstance = null;
+  let barTargetChartInstance = null;
 
-  window.onload = function() {
-    refreshAllData();
-  };
+  const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
-  // Utility Helpers
-  function parseNum(val) {
-    if (val === null || val === undefined) return 0;
-    const n = parseFloat(String(val).replace(/[^0-9.-]+/g, ""));
-    return isNaN(n) ? 0 : n;
-  }
+  $(document).ready(function() {
+    loadData();
+  });
 
-  function formatRupiah(val) {
-    return "Rp " + parseNum(val).toLocaleString("id-ID");
-  }
-
-  function switchTab(event, tabName) {
-    if (event) event.preventDefault();
-
-    $(".nav-sidebar .nav-link").removeClass("active");
-    $("#nav-" + tabName).addClass("active");
-
-    $("#tab-summary-content").hide();
-    $("#tab-produk-content").hide();
-    $("#tab-target-content").hide();
-    $("#tab-stock-content").hide();
-
-    $("#tab-" + tabName + "-content").show();
-
-    if (tabName === 'produk') {
-      filterProductTable();
-    } else if (tabName === 'target') {
-      renderTargetTab();
-    } else if (tabName === 'summary') {
-      renderSummaryTab();
-    } else if (tabName === 'stock') {
-      renderStockTab();
-    }
-  }
-
-  function refreshAllData() {
-    document.getElementById("loadingScreen").style.display = "flex";
-
-    fetch(API_URL)
+  function loadData() {
+    $('#loading').fadeIn();
+    
+    // Fetch data langsung dari endpoint Apps Script JSON secara online
+    fetch(APPS_SCRIPT_URL)
       .then(response => response.json())
       .then(data => {
-        document.getElementById("loadingScreen").style.display = "none";
-        rawSalesData = data.sales || [];
-        rawTargetData = data.target || [];
-        rawStockData = data.stock || []; 
-
-        renderProductTabOptions();
-        
-        const activeTab = $(".nav-sidebar .nav-link.active").attr("id")?.replace("nav-", "") || "summary";
-        if (activeTab === "summary") renderSummaryTab();
-        else if (activeTab === "produk") filterProductTable();
-        else if (activeTab === "target") renderTargetTab();
-        else if (activeTab === "stock") renderStockTab();
+        onDataLoaded(data);
       })
-      .catch(error => {
-        document.getElementById("loadingScreen").style.display = "none";
-        console.error("Error fetching data:", error);
-        alert("Gagal mengambil data dari server. Silakan coba lagi.");
+      .catch(err => {
+        alert('Gagal mengambil data dari Google Sheet. Pastikan skrip Google Apps Script sudah di-deploy dengan akses "Anyone". Error: ' + err.message);
+        $('#loading').fadeOut();
       });
   }
 
-  // --- TAB 1: SUMMARY ---
-  function renderSummaryTab() {
-    const tbody = document.getElementById("tableSummaryBody");
-    tbody.innerHTML = "";
-
-    if (!rawSalesData || rawSalesData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Data kosong.</td></tr>';
-      $("#sumTotalQty").text("0");
-      $("#sumTotalTransaksi").text("0");
-      $("#sumTotalRevenue").text("Rp 0");
-      if (chartPenjualanInstance) chartPenjualanInstance.destroy();
+  function onDataLoaded(data) {
+    if(!data) {
+      alert("Data kosong atau tidak berhasil diambil!");
+      $('#loading').fadeOut();
       return;
     }
+    rawData = data;
+    populateDropdowns();
+    renderSummary();
+    renderProdukSection();
+    renderTargetSection();
+    renderStokSection();
+    $('#loading').fadeOut();
+  }
 
-    let totalQty = 0;
-    let totalTransaksi = rawSalesData.length;
-    let totalRevenue = 0;
-    let dayMap = {};
+  function switchTab(tab) {
+    $('.tab-section').addClass('d-none');
+    $('.nav-link').removeClass('active');
 
-    rawSalesData.forEach(r => {
-      const qty = parseNum(r.qty);
-      const subtotal = parseNum(r.subtotal);
-      const day = r.day_ || r.day || "Lainnya";
+    if(tab === 'summary') {
+      $('#section-summary').removeClass('d-none');
+      $('#menu-summary').addClass('active');
+      $('#page-title').text('Sales Overview');
+    } else if(tab === 'produk') {
+      $('#section-produk').removeClass('d-none');
+      $('#menu-produk').addClass('active');
+      $('#page-title').text('Performa Produk Terjual');
+    } else if(tab === 'target') {
+      $('#section-target').removeClass('d-none');
+      $('#menu-target').addClass('active');
+      $('#page-title').text('Target vs Revenue');
+    } else if(tab === 'stok') {
+      $('#section-stok').removeClass('d-none');
+      $('#menu-stok').addClass('active');
+      $('#page-title').text('Monitoring Stok Produk');
+    }
+  }
 
-      totalQty += qty;
-      totalRevenue += subtotal;
+  function populateDropdowns() {
+    const events = [...new Set(rawData.detail.map(d => d.event))].filter(Boolean);
+    let optEvent = '<option value="Semua">-- Semua Event --</option>';
+    events.forEach(e => optEvent += `<option value="${e}">${e}</option>`);
+    $('#filter-event').html(optEvent);
 
-      if (!dayMap[day]) {
-        dayMap[day] = { totalSubtotal: 0, items: [] };
-      }
-      dayMap[day].totalSubtotal += subtotal;
-      dayMap[day].items.push(r);
+    // Filter Hari menggunakan Kolom P (_Day)
+    const days = [...new Set(rawData.detail.map(d => d._Day))].filter(Boolean);
+    let optDays = '<option value="Semua">-- Semua Hari --</option>';
+    days.forEach(d => optDays += `<option value="${d}">${d}</option>`);
+    $('#filter-produk-hari').html(optDays);
+    $('#filter-detail-hari').html(optDays);
+
+    const prods = [...new Set(rawData.detail.map(d => d.produkName))].filter(Boolean);
+    let optProds = '<option value="Semua">-- Semua Produk --</option>';
+    prods.forEach(p => optProds += `<option value="${p}">${p}</option>`);
+    $('#filter-produk-nama').html(optProds);
+  }
+
+  function renderSummary() {
+    const selectedEvent = $('#filter-event').val();
+    filteredSummaryDetail = rawData.detail;
+
+    if(selectedEvent !== 'Semua') {
+      filteredSummaryDetail = rawData.detail.filter(d => d.event === selectedEvent);
+    }
+
+    const totalQty = filteredSummaryDetail.reduce((acc, curr) => acc + (curr.qty || 0), 0);
+    const totalTrans = filteredSummaryDetail.length;
+    const totalRevenue = filteredSummaryDetail.reduce((acc, curr) => acc + (curr.subtotal || 0), 0);
+
+    // Disesuaikan: Teks Total Pesanan
+    $('#card-qty').text(totalQty.toLocaleString('id-ID'));
+    $('#card-transaksi').text(totalTrans.toLocaleString('id-ID'));
+    $('#card-revenue').text(formatIDR(totalRevenue));
+
+    // Grafik Perbandingan Penjualan: Parameternya Kolom P (_Day) dan Revenue Kolom I (subtotal)
+    const dayGroup = {};
+    filteredSummaryDetail.forEach(d => {
+      const label = d._Day || 'Lainnya';
+      dayGroup[label] = (dayGroup[label] || 0) + (d.subtotal || 0);
     });
 
-    $("#sumTotalQty").text(totalQty.toLocaleString("id-ID"));
-    $("#sumTotalTransaksi").text(totalTransaksi.toLocaleString("id-ID") + " Transaksi");
-    $("#sumTotalRevenue").text(formatRupiah(totalRevenue));
-
-    const sortedDays = Object.keys(dayMap).sort((a, b) => {
-      const numA = parseInt(a.replace(/\D/g, "")) || 0;
-      const numB = parseInt(b.replace(/\D/g, "")) || 0;
-      return numA - numB;
-    });
-
-    // Chart Render
-    const ctx = document.getElementById("chartPenjualan").getContext("2d");
-    if (chartPenjualanInstance) chartPenjualanInstance.destroy();
-
-    chartPenjualanInstance = new Chart(ctx, {
+    if(barDayChartInstance) barDayChartInstance.destroy();
+    barDayChartInstance = new Chart(document.getElementById('barDayChart').getContext('2d'), {
       type: 'bar',
       data: {
-        labels: sortedDays,
+        labels: Object.keys(dayGroup),
         datasets: [{
-          label: 'Total Penjualan (Rp)',
-          data: sortedDays.map(day => dayMap[day].totalSubtotal),
-          backgroundColor: '#C68642',
-          borderColor: '#8D5524',
-          borderWidth: 1
+          label: 'Total Revenue (Rp)',
+          data: Object.values(dayGroup),
+          backgroundColor: '#995F2F'
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true } }
-      }
+      options: { responsive: true, maintainAspectRatio: false }
     });
 
-    // Table Render
-    let no = 1;
-    sortedDays.forEach(day => {
-      const trGroup = document.createElement("tr");
-      trGroup.className = "group-header-row";
-      trGroup.innerHTML = `
-        <td colspan="6"><i class="fas fa-calendar-day mr-2"></i><strong>${day}</strong></td>
-        <td class="text-right font-weight-bold">${formatRupiah(dayMap[day].totalSubtotal)}</td>
-        <td></td>
-      `;
-      tbody.appendChild(trGroup);
+    const prodGroup = {};
+    filteredSummaryDetail.forEach(d => {
+      const label = d.produkName || 'Lainnya';
+      prodGroup[label] = (prodGroup[label] || 0) + (d.qty || 0);
+    });
 
-      dayMap[day].items.forEach(r => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="text-center">${no++}</td>
-          <td><span class="badge badge-warning">${r.day_ || r.day || '-'}</span></td>
-          <td>${r.tanggal_ || r.tanggal || '-'}</td>
-          <td><strong>${r.produk_ || r.produk || '-'}</strong></td>
-          <td class="text-center">${parseNum(r.qty).toLocaleString("id-ID")}</td>
-          <td class="text-right">${formatRupiah(r.harga)}</td>
-          <td class="text-right font-weight-bold text-success">${formatRupiah(r.subtotal)}</td>
-          <td class="text-right text-danger">${formatRupiah(r.diskon)}</td>
-        `;
-        tbody.appendChild(tr);
+    const sortedTopProds = Object.entries(prodGroup).sort((a,b) => b[1] - a[1]).slice(0, 10);
+
+    if(donutTopChartInstance) donutTopChartInstance.destroy();
+    donutTopChartInstance = new Chart(document.getElementById('donutTopProductChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: sortedTopProds.map(item => item[0]),
+        datasets: [{
+          data: sortedTopProds.map(item => item[1]),
+          backgroundColor: ['#995F2F', '#978F66', '#622B14', '#b3723d', '#b1aa86', '#7e381b', '#d28c55', '#c8c2a3', '#401c0d', '#e5aa7c']
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    renderSummaryDetailTable();
+  }
+
+  // Render Tabel Detail Transaksi dengan Filter Dropdown Hari
+  function renderSummaryDetailTable() {
+    const selectedHari = $('#filter-detail-hari').val();
+    let itemsToRender = filteredSummaryDetail;
+
+    if(selectedHari !== 'Semua') {
+      itemsToRender = itemsToRender.filter(d => d._Day === selectedHari);
+    }
+
+    const tbody = $('#tbody-detail').empty();
+    const groupedByDay = {};
+    itemsToRender.forEach(item => {
+      const key = item._Day || 'Tanpa Hari';
+      if(!groupedByDay[key]) groupedByDay[key] = [];
+      groupedByDay[key].push(item);
+    });
+
+    let globalNo = 1;
+    for (const [dayName, items] of Object.entries(groupedByDay)) {
+      let subtotalDay = 0;
+      items.forEach(item => {
+        subtotalDay += (item.subtotal || 0);
+        tbody.append(`
+          <tr>
+            <td>${globalNo++}</td>
+            <td>${item._Day || '-'}</td>
+            <td>${item.produkName}</td>
+            <td>${(item.qty || 0).toLocaleString('id-ID')}</td>
+            <td>${formatIDR(item.harga)}</td>
+            <td>${formatIDR(item.subtotal)}</td>
+            <td>${formatIDR(item.diskon)}</td>
+          </tr>
+        `);
       });
-    });
-  }
 
-  // --- TAB 2: PRODUK ---
-  function renderProductTabOptions() {
-    if (!rawSalesData || rawSalesData.length === 0) return;
-
-    const selectDay = document.getElementById("filterProductDay");
-    selectDay.innerHTML = '<option value="ALL">-- Semua Hari --</option>';
-
-    const uniqueDays = [...new Set(rawSalesData.map(r => r.day_ || r.day))].filter(Boolean).sort((a, b) => {
-      const numA = parseInt(a.replace(/\D/g, "")) || 0;
-      const numB = parseInt(b.replace(/\D/g, "")) || 0;
-      return numA - numB;
-    });
-
-    uniqueDays.forEach(day => {
-      const opt = document.createElement("option");
-      opt.value = day;
-      opt.innerText = day;
-      selectDay.appendChild(opt);
-    });
-
-    const selectProduct = document.getElementById("filterProductName");
-    selectProduct.innerHTML = '<option value="ALL">-- Semua Produk --</option>';
-
-    const uniqueProducts = [...new Set(rawSalesData.map(r => r.produk_ || r.produk))].filter(Boolean).sort();
-    uniqueProducts.forEach(prod => {
-      const opt = document.createElement("option");
-      opt.value = prod;
-      opt.innerText = prod;
-      selectProduct.appendChild(opt);
-    });
-  }
-
-  function filterProductTable() {
-    const selectedDay = document.getElementById("filterProductDay").value;
-    const selectedProduct = document.getElementById("filterProductName").value;
-    
-    let filtered = rawSalesData;
-    if (selectedDay !== "ALL") filtered = filtered.filter(r => (r.day_ || r.day) === selectedDay);
-    if (selectedProduct !== "ALL") filtered = filtered.filter(r => (r.produk_ || r.produk) === selectedProduct);
-
-    let productMap = {};
-    let totalSubtotalAll = 0;
-
-    filtered.forEach(r => {
-      const subtotal = parseNum(r.subtotal);
-      const qty = parseNum(r.qty);
-      const nama = r.produk_ || r.produk || "Tidak Diketahui";
-
-      totalSubtotalAll += subtotal;
-      if (!productMap[nama]) {
-        productMap[nama] = { nama: nama, qty: 0, subtotal: 0 };
-      }
-      productMap[nama].qty += qty;
-      productMap[nama].subtotal += subtotal;
-    });
-
-    let productList = Object.values(productMap).sort((a, b) => b.qty - a.qty);
-    const tbody = document.getElementById("tableProductBody");
-    tbody.innerHTML = "";
-
-    if (productList.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Tidak ada data produk.</td></tr>';
-      return;
+      tbody.append(`
+        <tr class="table-subtotal">
+          <td colspan="5" class="text-right">Total Sub Kelompok (${dayName}):</td>
+          <td>${formatIDR(subtotalDay)}</td>
+          <td></td>
+        </tr>
+      `);
     }
+  }
 
-    productList.forEach((p, idx) => {
-      const percent = totalSubtotalAll > 0 ? ((p.subtotal / totalSubtotalAll) * 100).toFixed(2) : 0;
+  function renderProdukSection() {
+    const filterHari = $('#filter-produk-hari').val();
+    const filterNama = $('#filter-produk-nama').val();
 
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="text-center">${idx + 1}</td>
-        <td><strong>${p.nama}</strong></td>
-        <td class="text-center font-weight-bold text-primary">${p.qty.toLocaleString("id-ID")}</td>
-        <td class="text-right font-weight-bold text-success">${formatRupiah(p.subtotal)}</td>
-        <td class="text-center">
-          <div class="progress progress-sm mb-1" style="height: 6px;">
-            <div class="progress-bar bg-warning" style="width: ${percent}%"></div>
-          </div>
-          <small class="font-weight-bold">${percent}%</small>
-        </td>
-      `;
-      tbody.appendChild(tr);
+    let filtered = rawData.detail;
+    if(filterHari !== 'Semua') filtered = filtered.filter(d => d._Day === filterHari);
+    if(filterNama !== 'Semua') filtered = filtered.filter(d => d.produkName === filterNama);
+
+    const mapProd = {};
+    let totalAllQty = 0;
+
+    filtered.forEach(d => {
+      const name = d.produkName || 'Lainnya';
+      if(!mapProd[name]) mapProd[name] = { qty: 0, total: 0 };
+      mapProd[name].qty += (d.qty || 0);
+      mapProd[name].total += (d.subtotal || 0);
+      totalAllQty += (d.qty || 0);
+    });
+
+    const rankList = Object.entries(mapProd).map(([nama, val]) => ({
+      nama,
+      qty: val.qty,
+      total: val.total,
+      kontribusi: totalAllQty > 0 ? (val.qty / totalAllQty) * 100 : 0
+    })).sort((a,b) => b.qty - a.qty);
+
+    const tbody = $('#tbody-produk-rank').empty();
+    rankList.forEach((item, index) => {
+      tbody.append(`
+        <tr>
+          <td>${index + 1}</td>
+          <td>${item.nama}</td>
+          <td>${item.qty.toLocaleString('id-ID')}</td>
+          <td>${formatIDR(item.total)}</td>
+          <td>
+            <div class="d-flex align-items-center">
+              <span class="mr-2" style="width: 45px; text-align: right;">${item.kontribusi.toFixed(1)}%</span>
+              <div class="progress progress-xs w-100">
+                <div class="progress-bar" style="width: ${item.kontribusi}%; background-color: var(--palette-primary);"></div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `);
     });
   }
 
-  // --- TAB 3: TARGET ---
-  function renderTargetTab() {
-    const tbody = document.getElementById("tableTargetBody");
-    tbody.innerHTML = "";
+  function renderTargetSection() {
+    const list = rawData.target;
 
-    if (!rawTargetData || rawTargetData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Data Target kosong.</td></tr>';
-      if (chartTargetInstance) chartTargetInstance.destroy();
-      $("#targetTotalTarget").text("Rp 0");
-      $("#targetTotalRevenue").text("Rp 0");
-      $("#targetTotalSelisih").text("Rp 0");
-      $("#targetTotalPercent").text("0%");
-      return;
-    }
+    const totTarget = list.reduce((a, b) => a + (b.target || 0), 0);
+    const totRevenue = list.reduce((a, b) => a + (b.revenue || 0), 0);
+    const totSelisih = totRevenue - totTarget;
+    const overallPercent = totTarget > 0 ? (totRevenue / totTarget) * 100 : 0;
 
-    let salesByDay = {};
-    rawSalesData.forEach(r => {
-      const day = r.day_ || r.day || "";
-      salesByDay[day] = (salesByDay[day] || 0) + parseNum(r.subtotal);
-    });
+    $('#target-total').text(formatIDR(totTarget));
+    $('#target-revenue').text(formatIDR(totRevenue));
+    $('#target-selisih').text(formatIDR(totSelisih));
+    $('#target-percent').text(overallPercent.toFixed(1) + '%');
 
-    const labels = [];
-    const targetValues = [];
-    const revenueValues = [];
-
-    let sumTarget = 0;
-    let sumRevenue = 0;
-
-    rawTargetData.forEach((r, idx) => {
-      const dayName = r.day || r.day_ || `Hari ${idx + 1}`;
-      const target = parseNum(r.target);
-      const revenue = salesByDay[dayName] !== undefined ? salesByDay[dayName] : parseNum(r.revenue);
-      const selisih = revenue - target;
-      
-      sumTarget += target;
-      sumRevenue += revenue;
-
-      let pctVal = target > 0 ? (revenue / target) * 100 : 0;
-      const pctFormatted = pctVal.toFixed(2) + "%";
-
-      labels.push(dayName);
-      targetValues.push(target);
-      revenueValues.push(revenue);
-
-      const isAchieved = revenue >= target;
-      const badgeClass = isAchieved ? "badge-success" : "badge-danger";
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="text-center">${idx + 1}</td>
-        <td><strong>${dayName}</strong></td>
-        <td class="text-right">${formatRupiah(target)}</td>
-        <td class="text-right font-weight-bold text-success">${formatRupiah(revenue)}</td>
-        <td class="text-right ${selisih < 0 ? 'text-danger' : 'text-primary'}">${formatRupiah(selisih)}</td>
-        <td class="text-center"><span class="badge ${badgeClass} p-2">${pctFormatted}</span></td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    // Update Nilai Card Info Tab Target
-    const sumSelisih = sumRevenue - sumTarget;
-    const totalPct = sumTarget > 0 ? ((sumRevenue / sumTarget) * 100).toFixed(2) : 0;
-
-    $("#targetTotalTarget").text(formatRupiah(sumTarget));
-    $("#targetTotalRevenue").text(formatRupiah(sumRevenue));
-    $("#targetTotalSelisih").text(formatRupiah(sumSelisih));
-    $("#targetTotalPercent").text(totalPct + "%");
-
-    // Chart Render
-    const ctx = document.getElementById("chartTargetVsRevenue").getContext("2d");
-    if (chartTargetInstance) chartTargetInstance.destroy();
-
-    chartTargetInstance = new Chart(ctx, {
+    if(barTargetChartInstance) barTargetChartInstance.destroy();
+    barTargetChartInstance = new Chart(document.getElementById('barTargetChart').getContext('2d'), {
       type: 'bar',
       data: {
-        labels: labels,
+        labels: list.map(t => t.day),
         datasets: [
-          {
-            label: 'Target (Rp)',
-            data: targetValues,
-            backgroundColor: '#adb5bd',
-            borderColor: '#6c757d',
-            borderWidth: 1
-          },
-          {
-            label: 'Revenue (Rp)',
-            data: revenueValues,
-            backgroundColor: '#28a745',
-            borderColor: '#1e7e34',
-            borderWidth: 1
-          }
+          { label: 'Target', data: list.map(t => t.target), backgroundColor: '#978F66' },
+          { label: 'Revenue', data: list.map(t => t.revenue), backgroundColor: '#995F2F' }
         ]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true } }
-      }
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    const tbody = $('#tbody-target').empty();
+    list.forEach((t, idx) => {
+      tbody.append(`
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${t.day}</td>
+          <td>${formatIDR(t.target)}</td>
+          <td>${formatIDR(t.revenue)}</td>
+          <td>${formatIDR(t.selisih)}</td>
+          <td>${(t.percent || 0).toFixed(1)}%</td>
+        </tr>
+      `);
     });
   }
 
-  // --- TAB 4: STOCK VIEW ---
-  function renderStockTab() {
-    const tbody = document.getElementById("tableStockBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
+  function renderStokSection() {
+    const query = $('#search-stok').val().toLowerCase();
+    const tbody = $('#tbody-stok').empty();
 
-    if (!rawStockData || rawStockData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Data Stok kosong.</td></tr>';
-      return;
-    }
+    const filtered = rawData.produk.filter(p => p.namaProduk.toLowerCase().includes(query));
 
-    let salesByProduct = {};
-    if (Array.isArray(rawSalesData)) {
-      rawSalesData.forEach(r => {
-        const pName = r.produk_ || r.nama_produk || r.produk || "";
-        if (pName) {
-          const qtyVal = typeof parseNum === "function" ? parseNum(r.qty) : (Number(r.qty) || 0);
-          salesByProduct[pName] = (salesByProduct[pName] || 0) + qtyVal;
-        }
-      });
-    }
-
-    rawStockData.forEach((r, idx) => {
-      const namaProduk = r.nama_produk || r.produk_ || r.namaProduk || "Tidak Diketahui";
-      
-      const totalStok = typeof parseNum === "function" 
-        ? parseNum(r.stok_total || r.stok) 
-        : (Number(r.stok_total || r.stok) || 0);
-
-      const terjual = salesByProduct[namaProduk] !== undefined 
-                      ? salesByProduct[namaProduk] 
-                      : 0;
-                      
-      const sisaStok = totalStok - terjual;
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="text-center">${idx + 1}</td>
-        <td><strong>${namaProduk}</strong></td>
-        <td class="text-center font-weight-bold text-info">${totalStok.toLocaleString("id-ID")}</td>
-        <td class="text-center font-weight-bold text-danger">${terjual.toLocaleString("id-ID")}</td>
-        <td class="text-center font-weight-bold text-success" style="font-size: 1.05rem;">${sisaStok.toLocaleString("id-ID")}</td>
-      `;
-      tbody.appendChild(tr);
+    filtered.forEach((p, idx) => {
+      tbody.append(`
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${p.namaProduk}</td>
+          <td>${(p.stok || 0).toLocaleString('id-ID')}</td>
+          <td>${(p.terjual || 0).toLocaleString('id-ID')}</td>
+          <td>${(p.sisaStok || 0).toLocaleString('id-ID')}</td>
+        </tr>
+      `);
     });
   }
-
 </script>
 </body>
 </html>
